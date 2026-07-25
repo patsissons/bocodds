@@ -170,7 +170,35 @@ async function buildSnapshot(env: Env, previous: Snapshot | null, now: Date): Pr
   };
 }
 
+function errorResponse(status: number, message: string): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'Access-Control-Allow-Origin': '*',
+    },
+  });
+}
+
 export const onRequestGet: PagesFunction<Env> = async (context) => {
+  // A misconfigured deployment should say so instead of surfacing a bare
+  // Cloudflare 1101 exception page.
+  if (!context.env.SNAPSHOTS) {
+    return errorResponse(
+      500,
+      'SNAPSHOTS KV binding is not configured. In the Pages dashboard, bind a KV namespace ' +
+        'named SNAPSHOTS (Settings -> Bindings -> KV namespace) and redeploy.',
+    );
+  }
+  try {
+    return await handleRequest(context);
+  } catch (error) {
+    return errorResponse(500, `Snapshot refresh failed: ${String(error)}`);
+  }
+};
+
+const handleRequest = async (context: Parameters<PagesFunction<Env>>[0]): Promise<Response> => {
   const now = new Date();
   const cached = await context.env.SNAPSHOTS.get(SNAPSHOT_KEY);
   let previous: Snapshot | null = null;

@@ -197,6 +197,19 @@ describe('GET /api/odds', () => {
     expect(december.sources.kalshi!.status).toBe('ok');
   });
 
+  it('returns an actionable 500 when the SNAPSHOTS binding is missing', async () => {
+    stubFetch(healthyRoutes);
+    const context = {
+      env: { ENABLE_BOCODDS: 'false', CONTACT_EMAIL: 'test@example.com' },
+      request: new Request('https://app.test/api/odds'),
+      waitUntil: vi.fn(),
+    } as unknown as Parameters<typeof onRequestGet>[0];
+    const response = await onRequestGet(context);
+    expect(response.status).toBe(500);
+    const body = (await response.json()) as { error: string };
+    expect(body.error).toContain('SNAPSHOTS KV binding');
+  });
+
   it('flags divergence per meeting using ok sources only', async () => {
     stubFetch(healthyRoutes);
     const { body } = await invoke(new MockKV());
