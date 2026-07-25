@@ -27,6 +27,8 @@ export interface SourceBlock {
   url: string;
   /** Plain-language explanation for degraded/disabled/unavailable states. */
   note?: string;
+  /** Raw upstream error for ops diagnosis; not rendered in the UI. */
+  error?: string;
 }
 
 export interface Divergence {

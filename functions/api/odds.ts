@@ -61,10 +61,17 @@ function jsonResponse(body: string): Response {
 }
 
 type SourceResult =
-  { kind: 'ok'; blocks: Map<string, SourceBlock> } | { kind: 'failed' } | { kind: 'disabled' };
+  | { kind: 'ok'; blocks: Map<string, SourceBlock> }
+  | { kind: 'failed'; reason: string }
+  | { kind: 'disabled' };
 
 /** Carry one source's block forward from the previous snapshot, marked stale. */
-function carryForward(previous: Snapshot | null, date: string, source: SourceName): SourceBlock {
+function carryForward(
+  previous: Snapshot | null,
+  date: string,
+  source: SourceName,
+  reason: string,
+): SourceBlock {
   const block = previous?.meetings.find((m) => m.date === date)?.sources[source];
   if (block && (block.status === 'ok' || block.status === 'stale')) {
     return { ...block, status: 'stale' };
@@ -74,6 +81,7 @@ function carryForward(previous: Snapshot | null, date: string, source: SourceNam
     status: 'unavailable',
     url: SOURCE_URLS[source],
     note: `${SOURCE_LABELS[source]} didn't respond.`,
+    error: reason,
   };
 }
 
@@ -91,7 +99,7 @@ function blockFor(
       note: 'This source is not shown until data permission is confirmed.',
     };
   }
-  if (result.kind === 'failed') return carryForward(previous, date, source);
+  if (result.kind === 'failed') return carryForward(previous, date, source, result.reason);
   const block = result.blocks.get(date);
   if (!block) {
     return {
@@ -146,16 +154,16 @@ async function buildSnapshot(env: Env, previous: Snapshot | null, now: Date): Pr
     kalshi:
       kalshiResult.status === 'fulfilled'
         ? { kind: 'ok', blocks: kalshiResult.value }
-        : { kind: 'failed' },
+        : { kind: 'failed', reason: String(kalshiResult.reason) },
     polymarket:
       polymarketResult.status === 'fulfilled'
         ? { kind: 'ok', blocks: polymarketResult.value }
-        : { kind: 'failed' },
+        : { kind: 'failed', reason: String(polymarketResult.reason) },
     bocodds: !enableBocOdds
       ? { kind: 'disabled' }
       : bocOddsPageResult.status === 'fulfilled'
         ? { kind: 'ok', blocks: buildBocOddsBlocks(bocOddsPageResult.value, currentRate.value) }
-        : { kind: 'failed' },
+        : { kind: 'failed', reason: String(bocOddsPageResult.reason) },
   };
 
   const meetingEntries: Meeting[] = meetings.map((meeting) => {
