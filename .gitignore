@@ -4,3 +4,4 @@ node_modules/
 .wrangler/
 test-results/
 playwright-report/
+tests/e2e/.wrangler-state/
