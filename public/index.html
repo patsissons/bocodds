@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BoC Rate Odds</title>
+    <meta
+      name="description"
+      content="Bank of Canada rate odds from three independent sources, side by side."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9F%8D%81%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <h1>BoC Rate Odds</h1>
+      <p class="tagline">Bank of Canada rate odds from three independent sources.</p>
+      <p class="header-meta" id="header-meta" hidden></p>
+    </header>
+
+    <main id="app" aria-live="polite">
+      <div id="loading" class="skeleton" aria-label="Loading odds">
+        <div class="skeleton-heading"></div>
+        <div class="skeleton-bar"></div>
+        <div class="skeleton-bar"></div>
+        <div class="skeleton-bar"></div>
+      </div>
+      <div id="error" hidden>
+        <p>
+          The odds couldn't be loaded. It's probably temporary —
+          <a href="/">try again</a>, or use the source links below.
+        </p>
+      </div>
+      <div id="content"></div>
+    </main>
+
+    <section class="links" aria-labelledby="links-heading">
+      <h2 id="links-heading">Sources &amp; official links</h2>
+      <ul>
+        <li>
+          <a
+            href="https://kalshi.com/markets/kxcbdecisioncanada/bank-of-canada-policy-interest-rate-decision"
+            >Kalshi: Bank of Canada policy rate markets</a
+          >
+        </li>
+        <li>
+          <a href="https://polymarket.com/predictions/bank-of-canada"
+            >Polymarket: Bank of Canada predictions</a
+          >
+        </li>
+        <li><a href="https://bankofcanadaodds.com/">BankofCanadaOdds.com</a></li>
+        <li>
+          <a href="https://www.bankofcanada.ca/core-functions/monetary-policy/key-interest-rate/"
+            >Bank of Canada: policy interest rate</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://www.bankofcanada.ca/2025/08/bank-canada-announces-2026-schedule-policy-interest-rate-announcements-monetary-policy-report-publications/"
+            >Bank of Canada: 2026 announcement schedule</a
+          >
+        </li>
+        <li>
+          <a href="https://www.bankofcanada.ca/press/press-releases/"
+            >Bank of Canada: press releases</a
+          >
+        </li>
+      </ul>
+    </section>
+
+    <footer class="about">
+      <h2>Methodology &amp; disclaimer</h2>
+      <p>
+        Kalshi probabilities are bid–ask midpoints (last trade when the book is empty or
+        uninformative). Polymarket probabilities are Yes prices per bucket. Each source's outcomes
+        are normalized to sum to 100%. Data refreshes on demand and may be up to 15 minutes old —
+        reload the page for fresh numbers.
+      </p>
+      <p>
+        These are market-implied probabilities, not forecasts and not financial advice. This site is
+        not affiliated with the Bank of Canada, Kalshi, Polymarket, or BankofCanadaOdds.com.
+      </p>
+    </footer>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
