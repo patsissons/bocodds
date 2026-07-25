@@ -197,6 +197,39 @@ describe('GET /api/odds', () => {
     expect(december.sources.kalshi!.status).toBe('ok');
   });
 
+  it('bypasses a fresh snapshot when the refresh token matches', async () => {
+    const fetchImpl = stubFetch(healthyRoutes);
+    const kv = new MockKV();
+    await invoke(kv, { REFRESH_TOKEN: 'sekrit' });
+    const upstreamCalls = fetchImpl.mock.calls.length;
+
+    vi.setSystemTime(new Date(NOW.getTime() + 60 * 1000)); // still well within TTL
+    const context = makeContext(kv, { REFRESH_TOKEN: 'sekrit' });
+    Object.assign(context, {
+      request: new Request('https://app.test/api/odds?refresh=sekrit'),
+    });
+    const response = await onRequestGet(context);
+    const body = (await response.json()) as Snapshot;
+    expect(fetchImpl.mock.calls.length).toBeGreaterThan(upstreamCalls);
+    expect(body.generated_at).toBe('2026-07-25T14:31:00.000Z');
+  });
+
+  it('ignores a wrong or missing refresh token', async () => {
+    const fetchImpl = stubFetch(healthyRoutes);
+    const kv = new MockKV();
+    const first = await invoke(kv, { REFRESH_TOKEN: 'sekrit' });
+    const upstreamCalls = fetchImpl.mock.calls.length;
+
+    const context = makeContext(kv, { REFRESH_TOKEN: 'sekrit' });
+    Object.assign(context, {
+      request: new Request('https://app.test/api/odds?refresh=wrong'),
+    });
+    const response = await onRequestGet(context);
+    const body = (await response.json()) as Snapshot;
+    expect(fetchImpl.mock.calls.length).toBe(upstreamCalls);
+    expect(body.generated_at).toBe(first.body.generated_at);
+  });
+
   it('returns an actionable 500 when the SNAPSHOTS binding is missing', async () => {
     stubFetch(healthyRoutes);
     const context = {

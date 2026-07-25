@@ -61,6 +61,19 @@ deterministically offline. First run: `npx playwright install chromium`.
 3. Set production vars in the dashboard: `CONTACT_EMAIL`, and `ENABLE_BOCODDS` (see below;
    defaults to `false` in `wrangler.toml`).
 
+### Forcing an early refresh
+
+Snapshots refresh on demand when older than 15 minutes. To rebuild one immediately (after a
+fix, or when a source came back), set a `REFRESH_TOKEN` secret in the Pages dashboard
+(Settings → Environment variables, encrypted) and request:
+
+```
+https://your-site/api/odds?refresh=<token>
+```
+
+Without the token (or with a wrong one) the request behaves like any other. Alternatively,
+delete the `snapshot:latest` key from the KV namespace — the next request rebuilds it.
+
 ## Enabling the BankofCanadaOdds.com source
 
 Their FAQ permits referencing data with attribution; anything beyond that requires contacting

@@ -24,6 +24,8 @@ interface Env {
   SNAPSHOTS: KVNamespace;
   ENABLE_BOCODDS?: string;
   CONTACT_EMAIL?: string;
+  /** Secret enabling ?refresh=<token> to bypass the snapshot TTL. */
+  REFRESH_TOKEN?: string;
   // Test-only base URL overrides; production uses the real hosts.
   KALSHI_BASE_URL?: string;
   POLYMARKET_BASE_URL?: string;
@@ -214,6 +216,14 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
 const handleRequest = async (context: Parameters<PagesFunction<Env>>[0]): Promise<Response> => {
   const now = new Date();
+  // Operator escape hatch: ?refresh=<REFRESH_TOKEN> rebuilds the snapshot
+  // immediately (e.g. after a fix, without waiting out the TTL). Token-gated
+  // so visitors can't bypass the cache and hammer the upstreams.
+  const requestedToken = new URL(context.request.url).searchParams.get('refresh');
+  const forceRefresh = Boolean(
+    context.env.REFRESH_TOKEN && requestedToken === context.env.REFRESH_TOKEN,
+  );
+
   const cached = await context.env.SNAPSHOTS.get(SNAPSHOT_KEY);
   let previous: Snapshot | null = null;
   if (cached) {
@@ -224,7 +234,8 @@ const handleRequest = async (context: Parameters<PagesFunction<Env>>[0]): Promis
     }
   }
 
-  if (previous && now.getTime() - new Date(previous.generated_at).getTime() < TTL_MS) {
+  const fresh = previous && now.getTime() - new Date(previous.generated_at).getTime() < TTL_MS;
+  if (fresh && !forceRefresh) {
     return jsonResponse(cached as string);
   }
 
