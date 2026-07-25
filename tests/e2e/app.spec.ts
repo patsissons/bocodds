@@ -38,6 +38,10 @@ test.describe('rendered page (all sources ok)', () => {
     await expect(meetings.nth(1)).toContainText('October 28, 2026');
     await expect(meetings.nth(2)).toContainText('December 9, 2026');
 
+    await expect(meetings.nth(0).locator('.meeting-sub')).toContainText(
+      /Announcement at 09:45 ET, (today|in \d+ days?)/,
+    );
+
     // September has all three sources: three shared-axis bars.
     await expect(meetings.nth(0).locator('.bar')).toHaveCount(3);
     await expect(meetings.nth(0).locator('.strip-source').first()).toHaveText('Kalshi');

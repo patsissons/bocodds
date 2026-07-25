@@ -58,6 +58,11 @@ function daysUntil(iso) {
   return Math.round((localDate(iso) - today) / oneDay);
 }
 
+function relativeDays(iso) {
+  const days = daysUntil(iso);
+  return days === 0 ? 'today' : days === 1 ? 'in 1 day' : `in ${days} days`;
+}
+
 function timeOf(isoTimestamp) {
   return new Date(isoTimestamp).toLocaleTimeString(undefined, {
     hour: '2-digit',
@@ -72,9 +77,9 @@ function renderHeaderMeta(data) {
     parts.push(`Current policy rate: ${data.current_rate.value.toFixed(2)}%${asOf}.`);
   }
   if (data.next_meeting) {
-    const days = daysUntil(data.next_meeting);
-    const inDays = days === 0 ? 'today' : days === 1 ? 'in 1 day' : `in ${days} days`;
-    parts.push(`Next decision: ${longDate(data.next_meeting)}, 09:45 ET, ${inDays}.`);
+    parts.push(
+      `Next decision: ${longDate(data.next_meeting)}, 09:45 ET, ${relativeDays(data.next_meeting)}.`,
+    );
   }
   const meta = document.getElementById('header-meta');
   meta.textContent = parts.join(' ');
@@ -222,7 +227,12 @@ function meetingSection(meeting, index, animate) {
   const flag = divergenceFlag(meeting);
   if (flag) heading.append(flag);
   section.append(heading);
-  section.append(el('p', { class: 'meeting-sub', text: `Announcement at ${meeting.time_et} ET` }));
+  section.append(
+    el('p', {
+      class: 'meeting-sub',
+      text: `Announcement at ${meeting.time_et} ET, ${relativeDays(meeting.date)}`,
+    }),
+  );
 
   const strip = el('div', { class: 'strip' });
   let bars = 0;
