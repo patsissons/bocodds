@@ -1,0 +1,23 @@
+{
+    "terms": {
+        "url": "https://www.bankofcanada.ca/terms/"
+    },
+    "seriesDetail": {
+        "V39079": {
+            "label": "V39079",
+            "description": "Target for the overnight rate",
+            "dimension": {
+                "key": "d",
+                "name": "Date"
+            }
+        }
+    },
+    "observations": [
+        {
+            "d": "2026-07-23",
+            "V39079": {
+                "v": "2.25"
+            }
+        }
+    ]
+}
