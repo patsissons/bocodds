@@ -26,6 +26,11 @@ interface Env {
   CONTACT_EMAIL?: string;
   /** Secret enabling ?refresh=<token> to bypass the snapshot TTL. */
   REFRESH_TOKEN?: string;
+  /** Kalshi API key credentials (secrets). Without them, Kalshi requests are
+   * anonymous and share a per-IP rate limit with all other Workers tenants,
+   * which reliably 429s in production. */
+  KALSHI_API_KEY_ID?: string;
+  KALSHI_PRIVATE_KEY?: string;
   // Test-only base URL overrides; production uses the real hosts.
   KALSHI_BASE_URL?: string;
   POLYMARKET_BASE_URL?: string;
@@ -118,9 +123,14 @@ async function buildSnapshot(env: Env, previous: Snapshot | null, now: Date): Pr
   const enableBocOdds = (env.ENABLE_BOCODDS ?? 'false').toLowerCase() === 'true';
   const contactEmail = env.CONTACT_EMAIL || 'unset@example.invalid';
 
+  const kalshiAuth =
+    env.KALSHI_API_KEY_ID && env.KALSHI_PRIVATE_KEY
+      ? { keyId: env.KALSHI_API_KEY_ID, privateKeyPem: env.KALSHI_PRIVATE_KEY }
+      : undefined;
+
   const [rateResult, kalshiResult, polymarketResult, bocOddsPageResult] = await Promise.allSettled([
     fetchCurrentRate(env.BOC_VALET_BASE_URL),
-    fetchKalshi(env.KALSHI_BASE_URL),
+    fetchKalshi(env.KALSHI_BASE_URL, kalshiAuth),
     fetchPolymarket(meetings, env.POLYMARKET_BASE_URL),
     enableBocOdds
       ? fetchBocOddsPage(contactEmail, env.BOCODDS_BASE_URL)

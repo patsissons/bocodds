@@ -61,6 +61,21 @@ deterministically offline. First run: `npx playwright install chromium`.
 3. Set production vars in the dashboard: `CONTACT_EMAIL`, and `ENABLE_BOCODDS` (see below;
    defaults to `false` in `wrangler.toml`).
 
+### Kalshi API key (required in practice)
+
+Anonymous Kalshi requests are rate-limited per IP, and Cloudflare Workers egress IPs are
+shared across many tenants — so production requests almost always get 429s. Create an API key
+(kalshi.com → Account & Security → API Keys) and set two **encrypted** env vars in the Pages
+dashboard:
+
+- `KALSHI_API_KEY_ID` — the key ID (UUID shown at creation)
+- `KALSHI_PRIVATE_KEY` — the downloaded private key PEM, pasted verbatim (PKCS#8 or PKCS#1;
+  literal `\n` escapes also accepted)
+
+Requests are then signed (RSA-PSS, per Kalshi's auth scheme) and rate limiting applies to your
+key instead of the shared IP. Without the key, the function still retries 429s with backoff
+and carries stale Kalshi data forward when blocked.
+
 ### Forcing an early refresh
 
 Snapshots refresh on demand when older than 15 minutes. To rebuild one immediately (after a

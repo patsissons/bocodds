@@ -2,6 +2,7 @@
 // (KXCBDECISIONCANADA-26SEP), one binary market per outcome within the event.
 
 import { fetchJson } from './http';
+import { kalshiAuthHeaders, type KalshiAuth } from './kalshi-auth';
 import { meetingForYearMonth } from './schedule';
 import {
   normalizeOutcomes,
@@ -13,8 +14,15 @@ import {
 } from './snapshot';
 
 const HOSTS = ['https://external-api.kalshi.com', 'https://api.elections.kalshi.com'];
-const MARKETS_PATH =
-  '/trade-api/v2/markets?series_ticker=KXCBDECISIONCANADA&status=open&limit=1000';
+const MARKETS_PATH = '/trade-api/v2/markets';
+const MARKETS_QUERY = '?series_ticker=KXCBDECISIONCANADA&status=open&limit=1000';
+
+// Kalshi 429s carry no Retry-After; the token bucket refills continuously and
+// their docs recommend exponential backoff. Anonymous requests share a per-IP
+// bucket with every other Cloudflare Workers tenant, so retries only
+// sometimes win a token — authenticated requests (per-key bucket) are the
+// reliable path.
+const RETRY_DELAYS_MS = [500, 1000];
 
 export const KALSHI_MARKET_URL =
   'https://kalshi.com/markets/kxcbdecisioncanada/bank-of-canada-policy-interest-rate-decision';
@@ -158,19 +166,39 @@ export function parseKalshiMarkets(markets: KalshiMarket[]): Map<string, SourceB
   return blocks;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
- * Fetch open BoC decision markets. Tries the primary host, then the fallback.
- * `baseUrlOverride` (env KALSHI_BASE_URL) points tests at a fixture server.
+ * Fetch open BoC decision markets. Tries the primary host then the fallback,
+ * retrying 429s with backoff. With `auth` (env KALSHI_API_KEY_ID +
+ * KALSHI_PRIVATE_KEY) requests are signed, moving rate limiting from the
+ * shared egress IP to our own API key. `baseUrlOverride` (env
+ * KALSHI_BASE_URL) points tests at a fixture server.
  */
-export async function fetchKalshi(baseUrlOverride?: string): Promise<Map<string, SourceBlock>> {
+export async function fetchKalshi(
+  baseUrlOverride?: string,
+  auth?: KalshiAuth,
+): Promise<Map<string, SourceBlock>> {
   const hosts = baseUrlOverride ? [baseUrlOverride] : HOSTS;
   let lastError: unknown;
   for (const host of hosts) {
-    try {
-      const body = await fetchJson<KalshiMarketsResponse>(`${host}${MARKETS_PATH}`);
-      return parseKalshiMarkets(body.markets ?? []);
-    } catch (error) {
-      lastError = error;
+    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+      try {
+        const headers = auth ? await kalshiAuthHeaders(auth, 'GET', MARKETS_PATH) : undefined;
+        const body = await fetchJson<KalshiMarketsResponse>(
+          `${host}${MARKETS_PATH}${MARKETS_QUERY}`,
+          { headers },
+        );
+        return parseKalshiMarkets(body.markets ?? []);
+      } catch (error) {
+        lastError = error;
+        const rateLimited = String(error).includes('responded 429');
+        const delay = RETRY_DELAYS_MS[attempt];
+        if (!rateLimited || delay === undefined) break; // non-429 -> next host
+        await sleep(delay + Math.floor(Math.random() * 250));
+      }
     }
   }
   throw lastError;

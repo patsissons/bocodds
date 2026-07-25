@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   classifyKalshiLabel,
+  fetchKalshi,
   marketProbability,
   meetingDateForEventTicker,
   parseKalshiMarkets,
@@ -76,6 +77,47 @@ describe('meetingDateForEventTicker', () => {
     expect(meetingDateForEventTicker('KXCBDECISIONCANADA-26FEB')).toBeUndefined();
     expect(meetingDateForEventTicker('KXCBDECISIONCANADA-25SEP')).toBeUndefined();
     expect(meetingDateForEventTicker('NONSENSE')).toBeUndefined();
+  });
+});
+
+describe('fetchKalshi 429 handling', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('retries a 429 with backoff and succeeds when the bucket refills', async () => {
+    vi.useFakeTimers();
+    let calls = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        calls += 1;
+        if (calls < 3) return new Response('rate limited', { status: 429 });
+        return new Response(JSON.stringify(fixture), { status: 200 });
+      }),
+    );
+    const promise = fetchKalshi('https://kalshi.test');
+    await vi.runAllTimersAsync();
+    const blocks = await promise;
+    expect(calls).toBe(3);
+    expect(blocks.size).toBeGreaterThan(0);
+    vi.useRealTimers();
+  });
+
+  it('signs requests when auth is provided', async () => {
+    const seen: Array<Record<string, string>> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        seen.push(Object.fromEntries(new Headers(init?.headers).entries()));
+        return new Response(JSON.stringify(fixture), { status: 200 });
+      }),
+    );
+    const { generateKeyPairSync } = await import('node:crypto');
+    const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+    const pem = privateKey.export({ type: 'pkcs8', format: 'pem' }) as string;
+    await fetchKalshi('https://kalshi.test', { keyId: 'key-uuid', privateKeyPem: pem });
+    expect(seen[0]!['kalshi-access-key']).toBe('key-uuid');
+    expect(seen[0]!['kalshi-access-timestamp']).toMatch(/^\d+$/);
+    expect(seen[0]!['kalshi-access-signature']).toBeTruthy();
   });
 });
 
