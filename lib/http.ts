@@ -3,12 +3,19 @@
 
 export const UPSTREAM_TIMEOUT_MS = 5000;
 
+// Workers' fetch sends no User-Agent by default, and some upstream WAFs
+// (Kalshi's included) reject datacenter traffic without one. Callers may
+// override (the bocodds scraper sends its contact-email UA).
+const DEFAULT_USER_AGENT = 'bocodds-aggregator/1.0 (+https://bocodds.com)';
+
 export async function fetchWithTimeout(
   url: string,
   init: RequestInit = {},
   timeoutMs = UPSTREAM_TIMEOUT_MS,
 ): Promise<Response> {
-  const response = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+  const headers = new Headers(init.headers);
+  if (!headers.has('User-Agent')) headers.set('User-Agent', DEFAULT_USER_AGENT);
+  const response = await fetch(url, { ...init, headers, signal: AbortSignal.timeout(timeoutMs) });
   if (!response.ok) {
     throw new Error(`GET ${url} responded ${response.status}`);
   }

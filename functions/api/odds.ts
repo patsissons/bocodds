@@ -117,6 +117,20 @@ async function buildSnapshot(env: Env, previous: Snapshot | null, now: Date): Pr
       : Promise.reject(new Error('disabled')),
   ]);
 
+  // Surface per-source failures in the deployment logs (live tail) — the
+  // response body deliberately degrades instead of erroring.
+  const failures: Array<[string, PromiseSettledResult<unknown>]> = [
+    ['boc_valet', rateResult],
+    ['kalshi', kalshiResult],
+    ['polymarket', polymarketResult],
+    ['bocodds', bocOddsPageResult],
+  ];
+  for (const [name, result] of failures) {
+    if (result.status === 'rejected' && !(name === 'bocodds' && !enableBocOdds)) {
+      console.error(`upstream ${name} failed:`, String(result.reason));
+    }
+  }
+
   let currentRate: CurrentRate;
   if (rateResult.status === 'fulfilled') {
     currentRate = rateResult.value;
