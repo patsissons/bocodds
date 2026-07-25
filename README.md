@@ -55,8 +55,9 @@ deterministically offline. First run: `npx playwright install chromium`.
 
 1. Create the Pages project (GitHub integration, or `npx wrangler pages deploy`).
    Build output directory: `public`. No build command needed.
-2. Create a KV namespace and bind it as `SNAPSHOTS` in the Pages dashboard
-   (Settings → Bindings → KV namespace).
+2. The `SNAPSHOTS` KV binding is declared in `wrangler.toml` (namespace
+   `bocodds-snapshots`); Pages applies it automatically on deploy. If you fork this, create
+   your own KV namespace and put its ID there (or bind it in the dashboard instead).
 3. Set production vars in the dashboard: `CONTACT_EMAIL`, and `ENABLE_BOCODDS` (see below;
    defaults to `false` in `wrangler.toml`).
 
