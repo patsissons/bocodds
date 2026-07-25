@@ -12,6 +12,10 @@ pages_build_output_dir = "public"
 # confirmed (see README). Override locally in .dev.vars.
 ENABLE_BOCODDS = "true"
 CONTACT_EMAIL = "patricksissons@gmail.com"
+# Kalshi requests route through this relay (proxy/kalshi-proxy.ts on Deno
+# Deploy): Cloudflare's shared egress IPs are anonymously rate-limited at
+# Kalshi (429), the relay's egress pool is not. See README "Kalshi rate limits".
+KALSHI_BASE_URL = "https://bocodds.patsissons.deno.net"
 
 [[kv_namespaces]]
 binding = "SNAPSHOTS"
