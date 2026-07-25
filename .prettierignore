@@ -3,5 +3,5 @@ node_modules/
 test-results/
 playwright-report/
 public/fonts/
-tests/fixtures/bocodds.html
+tests/fixtures/
 package-lock.json
