@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: 'IBM Plex Sans';
+        src: url('../public/fonts/ibm-plex-sans-latin.woff2') format('woff2');
+        font-weight: 400 600;
+      }
+      @font-face {
+        font-family: 'IBM Plex Mono';
+        src: url('../public/fonts/ibm-plex-mono-latin-600.woff2') format('woff2');
+        font-weight: 600;
+      }
+      * {
+        margin: 0;
+        box-sizing: border-box;
+      }
+      body {
+        width: 1200px;
+        height: 630px;
+        background: #fafaf7;
+        color: #1a1d21;
+        font-family: 'IBM Plex Sans', sans-serif;
+        padding: 72px 84px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      h1 {
+        font-size: 76px;
+        font-weight: 600;
+        letter-spacing: -1px;
+      }
+      .tagline {
+        font-size: 32px;
+        color: #6b7280;
+        margin-top: 14px;
+      }
+      .strip {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 22px 28px;
+        align-items: center;
+      }
+      .label {
+        font-size: 26px;
+        color: #6b7280;
+        text-align: right;
+      }
+      .bar {
+        display: flex;
+        height: 34px;
+        gap: 4px;
+      }
+      .seg {
+        height: 100%;
+      }
+      .cut {
+        background: #2f6fb2;
+      }
+      .hold {
+        background: #14684b;
+      }
+      .hike {
+        background: #a63a2e;
+      }
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        border-top: 2px solid #e4e4de;
+        padding-top: 28px;
+      }
+      .legend {
+        display: flex;
+        gap: 36px;
+        font-size: 26px;
+        color: #6b7280;
+      }
+      .legend span::before {
+        content: '';
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        margin-right: 12px;
+      }
+      .legend .l-cut::before {
+        background: #2f6fb2;
+      }
+      .legend .l-hold::before {
+        background: #14684b;
+      }
+      .legend .l-hike::before {
+        background: #a63a2e;
+      }
+      .domain {
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 600;
+        font-size: 28px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>BoC Rate Odds</h1>
+      <p class="tagline">Bank of Canada rate odds from three independent sources</p>
+    </div>
+    <div class="strip">
+      <div class="label">Kalshi</div>
+      <div class="bar">
+        <div class="seg cut" style="width: 13%"></div>
+        <div class="seg hold" style="width: 76%"></div>
+        <div class="seg hike" style="width: 11%"></div>
+      </div>
+      <div class="label">Polymarket</div>
+      <div class="bar">
+        <div class="seg cut" style="width: 4%"></div>
+        <div class="seg hold" style="width: 82%"></div>
+        <div class="seg hike" style="width: 14%"></div>
+      </div>
+      <div class="label">BankofCanadaOdds</div>
+      <div class="bar">
+        <div class="seg hold" style="width: 77%"></div>
+        <div class="seg hike" style="width: 23%"></div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="legend">
+        <span class="l-cut">cut</span>
+        <span class="l-hold">hold</span>
+        <span class="l-hike">hike</span>
+      </div>
+      <div class="domain">bocodds.com</div>
+    </div>
+  </body>
+</html>

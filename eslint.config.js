@@ -22,9 +22,10 @@ export default tseslint.config(
     },
   },
   {
-    files: ['tests/e2e/**/*.mjs'],
+    files: ['tests/e2e/**/*.mjs', 'scripts/**/*.mjs'],
     languageOptions: {
-      globals: { ...globals.node },
+      // document: used inside page.evaluate() callbacks (browser side).
+      globals: { ...globals.node, document: 'readonly' },
     },
   },
   prettier,
