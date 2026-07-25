@@ -61,20 +61,23 @@ deterministically offline. First run: `npx playwright install chromium`.
 3. Set production vars in the dashboard: `CONTACT_EMAIL`, and `ENABLE_BOCODDS` (see below;
    defaults to `false` in `wrangler.toml`).
 
-### Kalshi API key (required in practice)
+### Kalshi rate limits (read this if Kalshi shows "didn't respond")
 
 Anonymous Kalshi requests are rate-limited per IP, and Cloudflare Workers egress IPs are
-shared across many tenants — so production requests almost always get 429s. Create an API key
-(kalshi.com → Account & Security → API Keys) and set two **encrypted** env vars in the Pages
-dashboard:
+shared across many tenants — so production requests frequently get 429s even though the same
+request works from a residential IP. Mitigations, in order of preference:
 
-- `KALSHI_API_KEY_ID` — the key ID (UUID shown at creation)
-- `KALSHI_PRIVATE_KEY` — the downloaded private key PEM, pasted verbatim (PKCS#8 or PKCS#1;
-  literal `\n` escapes also accepted)
-
-Requests are then signed (RSA-PSS, per Kalshi's auth scheme) and rate limiting applies to your
-key instead of the shared IP. Without the key, the function still retries 429s with backoff
-and carries stale Kalshi data forward when blocked.
+1. **API key** (if you can create one — key creation is restricted in some jurisdictions,
+   including Canada): kalshi.com → Account & Security → API Keys, then set two **encrypted**
+   env vars in the Pages dashboard: `KALSHI_API_KEY_ID` (the UUID) and `KALSHI_PRIVATE_KEY`
+   (the downloaded PEM, pasted verbatim; PKCS#8 or PKCS#1, `\n`-escaped also accepted).
+   Requests are then signed (RSA-PSS) and rate limiting applies per key instead of per IP.
+2. **Relay on a different egress pool**: deploy `proxy/kalshi-proxy.ts` on Deno Deploy's free
+   tier (dash.deno.com → New Playground → paste the file) and set `KALSHI_BASE_URL` to the
+   resulting `https://<name>.deno.dev` URL in the Pages dashboard. No code changes needed.
+3. **Do nothing**: the function retries 429s with backoff on every refresh, and any success is
+   carried forward as `stale` between wins, so intermittent breakthroughs keep the card
+   populated with an "as of" tag.
 
 ### Forcing an early refresh
 

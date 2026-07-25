@@ -15,7 +15,10 @@ import {
 
 const HOSTS = ['https://external-api.kalshi.com', 'https://api.elections.kalshi.com'];
 const MARKETS_PATH = '/trade-api/v2/markets';
-const MARKETS_QUERY = '?series_ticker=KXCBDECISIONCANADA&status=open&limit=1000';
+// limit=100 comfortably covers the ~5 markets per meeting while keeping the
+// request's rate-limit token cost low (Kalshi prices requests by weight,
+// which matters when sharing an anonymous per-IP bucket).
+const MARKETS_QUERY = '?series_ticker=KXCBDECISIONCANADA&status=open&limit=100';
 
 // Kalshi 429s carry no Retry-After; the token bucket refills continuously and
 // their docs recommend exponential backoff. Anonymous requests share a per-IP
