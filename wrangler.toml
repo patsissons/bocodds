@@ -10,7 +10,7 @@ pages_build_output_dir = "public"
 [vars]
 # Scraping bankofcanadaodds.com stays off in production until permission is
 # confirmed (see README). Override locally in .dev.vars.
-ENABLE_BOCODDS = "false"
+ENABLE_BOCODDS = "true"
 CONTACT_EMAIL = "patricksissons@gmail.com"
 
 [[kv_namespaces]]
