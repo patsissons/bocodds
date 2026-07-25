@@ -167,21 +167,20 @@ export function buildBocOddsBlocks(
 }
 
 /**
- * Fetch and parse the homepage. `contactEmail` goes into the User-Agent per
- * the site's attribution etiquette. `baseUrlOverride` (env BOCODDS_BASE_URL)
- * points tests at a fixture server.
+ * Fetch and parse the homepage (blocks are built separately so this can run
+ * in parallel with the Valet rate fetch). `contactEmail` goes into the
+ * User-Agent per the site's attribution etiquette. `baseUrlOverride`
+ * (env BOCODDS_BASE_URL) points tests at a fixture server.
  */
-export async function fetchBocOdds(
+export async function fetchBocOddsPage(
   contactEmail: string,
-  officialRate: number | null,
   baseUrlOverride?: string,
-): Promise<Map<string, SourceBlock>> {
+): Promise<BocOddsPage> {
   const url = baseUrlOverride ? `${baseUrlOverride}/` : BOCODDS_URL;
   const response = await fetchWithTimeout(url, {
     headers: {
       'User-Agent': `bocodds-aggregator/1.0 (rate odds dashboard; contact: ${contactEmail})`,
     },
   });
-  const page = parseBocOddsHtml(await response.text());
-  return buildBocOddsBlocks(page, officialRate);
+  return parseBocOddsHtml(await response.text());
 }
