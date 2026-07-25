@@ -1,0 +1,14 @@
+# Cloudflare Pages configuration.
+#
+# The SNAPSHOTS KV namespace is bound in the Pages dashboard for production
+# (Settings -> Functions -> KV namespace bindings). Local dev gets an in-memory
+# namespace via the --kv SNAPSHOTS flag in `npm run dev`.
+name = "bocodds"
+compatibility_date = "2026-07-01"
+pages_build_output_dir = "public"
+
+[vars]
+# Scraping bankofcanadaodds.com stays off in production until permission is
+# confirmed (see README). Override locally in .dev.vars.
+ENABLE_BOCODDS = "false"
+CONTACT_EMAIL = ""

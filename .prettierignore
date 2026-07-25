@@ -1,0 +1,7 @@
+node_modules/
+.wrangler/
+test-results/
+playwright-report/
+public/fonts/
+tests/fixtures/bocodds.html
+package-lock.json
