@@ -130,6 +130,20 @@ test.describe('degraded and disabled states', () => {
   });
 });
 
+test.describe('dynamic OG meta', () => {
+  test('serves rewritten title and meta once a snapshot exists', async ({ request }) => {
+    await request.get('/api/odds'); // populate KV so / has data to rewrite with
+    const response = await request.get('/');
+    const html = await response.text();
+    expect(html).toMatch(/<title>BoC Rate Odds — Sep 2: \d+% (cut|hold|hike)<\/title>/);
+    expect(html).toMatch(
+      /property="og:description" content="Market-implied odds for the September 2, 2026 Bank of Canada decision:/,
+    );
+    expect(html).toMatch(/property="og:image" content="[^"]*\/og\.png\?v=\d+"/);
+    expect(html).toMatch(/name="twitter:title" content="BoC Rate Odds — Sep 2:/);
+  });
+});
+
 test.describe('error state', () => {
   test('unreachable API shows a friendly error and keeps the static links', async ({ page }) => {
     await page.route('**/api/odds', (route) => route.abort());
