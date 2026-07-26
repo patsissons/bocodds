@@ -181,6 +181,54 @@ function scheduleSection(schedule) {
   );
 }
 
+function copyButton(id, label, text) {
+  const button = el('button', {
+    type: 'button',
+    class: 'share-button',
+    'data-share': id,
+    text: label,
+  });
+  button.addEventListener('click', () => {
+    // Optimistic label flip: the clipboard promise can stay pending while
+    // the window is unfocused, and the write itself virtually never fails
+    // in a secure context.
+    navigator.clipboard.writeText(text).catch(() => (button.textContent = 'Copy failed'));
+    button.textContent = 'Copied ✓';
+    setTimeout(() => (button.textContent = label), 1600);
+  });
+  return button;
+}
+
+function shareSection(data) {
+  const title = data.next_meeting
+    ? `BoC Rate Odds — next decision ${longDate(data.next_meeting)}`
+    : 'BoC Rate Odds';
+  const url = `${location.origin}/`;
+  const embedCode = `<iframe src="${location.origin}/embed" width="600" height="200" style="border:0" title="BoC Rate Odds"></iframe>`;
+
+  const row = el('div', { class: 'share-row' });
+  if (navigator.share) {
+    const share = el('button', { type: 'button', class: 'share-button', text: 'Share' });
+    share.addEventListener('click', () => navigator.share({ title, url }).catch(() => {}));
+    row.append(share);
+  }
+  row.append(
+    copyButton('link', 'Copy link', url),
+    copyButton('embed-code', 'Copy embed code', embedCode),
+  );
+
+  return el(
+    'section',
+    { class: 'share', 'aria-labelledby': 'share-heading' },
+    el('h2', { id: 'share-heading', text: 'Share' }),
+    row,
+    el('p', {
+      class: 'share-note',
+      text: 'The embed code drops a compact card of these odds into any web page.',
+    }),
+  );
+}
+
 function render(data) {
   const animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   renderHeaderMeta(data);
@@ -190,6 +238,7 @@ function render(data) {
     content.append(meetingSection(meeting, index, animate));
   });
   if (data.schedule.length > 0) content.append(scheduleSection(data.schedule));
+  content.append(shareSection(data));
 }
 
 async function main() {

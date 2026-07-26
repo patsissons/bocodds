@@ -28,6 +28,8 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL: `http://localhost:${APP_PORT}`,
+    // For the share-row copy buttons.
+    permissions: ['clipboard-read', 'clipboard-write'],
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] }, grepInvert: /@mobile/ },

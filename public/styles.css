@@ -307,6 +307,45 @@ h3 {
   margin: 4px 0 0;
 }
 
+/* ---- Share row ---- */
+
+.share {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.share h2 {
+  font-size: 15px;
+  margin: 0 0 10px;
+}
+
+.share-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.share-button {
+  font: inherit;
+  font-size: 13px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.share-button:hover {
+  border-color: var(--muted);
+}
+
+.share-note {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 10px 0 0;
+}
+
 /* ---- Embed (iframe card) ---- */
 
 body.embed {

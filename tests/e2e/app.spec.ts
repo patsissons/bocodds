@@ -9,6 +9,9 @@ import { expect, test, type Page, type Route } from '@playwright/test';
 declare const document: {
   scrollingElement: { scrollWidth: number; clientWidth: number } | null;
 };
+declare const navigator: {
+  clipboard: { readText(): Promise<string> };
+};
 
 type OddsBody = {
   meetings: Array<{ sources: Record<string, Record<string, unknown>> }>;
@@ -73,6 +76,21 @@ test.describe('rendered page (all sources ok)', () => {
     const december = page.locator('.meeting').nth(2);
     await expect(december).toContainText('Polymarket has no market for this meeting yet.');
     await expect(december.locator('.bar')).toHaveCount(2);
+  });
+
+  test('share row copies the link and the embed code', async ({ page }) => {
+    // Selected via data-share, not accessible name — the label flips to
+    // "Copied ✓" on click, which would defeat a name-based locator.
+    const copyLink = page.locator('[data-share="link"]');
+    const copyEmbed = page.locator('[data-share="embed-code"]');
+    await expect(copyLink).toHaveText('Copy link');
+
+    await copyEmbed.click();
+    await expect(copyEmbed).toHaveText('Copied ✓');
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    expect(copied).toContain('<iframe src=');
+    expect(copied).toContain('/embed');
+    await expect(copyEmbed).toHaveText('Copy embed code'); // label restores
   });
 
   test('shows the schedule and the disclaimer', async ({ page }) => {
