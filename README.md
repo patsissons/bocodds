@@ -2,20 +2,54 @@
 
 Bank of Canada policy-rate odds from three independent sources — Kalshi, Polymarket, and
 BankofCanadaOdds.com — side by side, with disagreement flagged, plus the official decision
-schedule and current policy rate. Static frontend, one Cloudflare Pages Function, zero npm
-runtime dependencies.
+schedule and current policy rate. Static frontend, a few small Cloudflare Pages Functions,
+and exactly one runtime npm dependency (`workers-og`, for the social card — see below).
 
 ## How it works
 
-- `public/` — plain HTML/CSS/JS frontend. `app.js` fetches `/api/odds` once on load and renders;
-  a browser refresh is the refresh.
-- `functions/api/odds.ts` — the only server code. Returns a KV-cached snapshot; if the snapshot
+- `public/` — plain HTML/CSS/JS frontend (ES modules, no bundler). `app.js` fetches
+  `/api/odds` once on load and renders; a browser refresh is the refresh. `embed.html` +
+  `embed.js` are the compact iframe card; `shared.js` holds the render helpers both use.
+- `functions/api/odds.ts` — the data function. Returns a KV-cached snapshot; if the snapshot
   is older than 15 minutes it refetches all upstreams in parallel (5 s per-source timeout).
   A failing source is carried forward from the previous snapshot marked `stale`
   (`unavailable` on cold start) — partial failures never produce a 500.
+- `functions/index.ts` and `functions/og.png.ts` — dynamic link previews (see "Sharing,
+  embedding, and link previews").
 - `lib/` — per-source clients and the shared snapshot math (normalization, cut/hold/hike
   rollups, divergence rule). Sources keep their native shapes: Kalshi bps buckets, Polymarket
   bucket markets, BankofCanadaOdds target-rate levels.
+
+## Sharing, embedding, and link previews
+
+**Embed**: `/embed` is a compact card of the next meeting's odds, made for iframes (links
+open in a new tab; `?meeting=YYYY-MM-DD` picks a specific meeting). The "Copy embed code"
+button in the page's Share row copies this snippet:
+
+```html
+<iframe
+  src="https://bocodds.com/embed"
+  width="600"
+  height="200"
+  style="border: 0"
+  title="BoC Rate Odds"
+></iframe>
+```
+
+**Dynamic Open Graph**: link previews show live data, server-rendered so scrapers (which
+run no JS) see it:
+
+- `functions/index.ts` serves `/` with `<title>`, description, and OG/Twitter meta rewritten
+  from the cached KV snapshot via HTMLRewriter — e.g. `BoC Rate Odds — Sep 2: 74% hold`.
+  It is read-only (a scraper visit never triggers upstream fetches) and falls back to the
+  static meta in `public/index.html` when there's no snapshot.
+- `functions/og.png.ts` renders the social card from the same snapshot using `workers-og`
+  (Satori + resvg WASM) — the project's only runtime npm dependency, bundled into the
+  Functions worker; the page payload is unchanged. The committed `public/og.png` (regenerate
+  with `node scripts/generate-og-image.mjs`) is the fallback whenever there's no snapshot or
+  rendering fails. Satori reads TTF/OTF/WOFF only, hence the extra `.woff` copies in
+  `public/fonts/`. The og:image URL carries a `?v=<snapshot>` cache-buster so scrapers
+  refetch when the data changes.
 
 ## Setup
 
