@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, test, type Page, type Route } from '@playwright/test';
 
 // The webServer stack (playwright.config.ts) runs the real Pages Function
@@ -141,6 +142,18 @@ test.describe('dynamic OG meta', () => {
     );
     expect(html).toMatch(/property="og:image" content="[^"]*\/og\.png\?v=\d+"/);
     expect(html).toMatch(/name="twitter:title" content="BoC Rate Odds — Sep 2:/);
+  });
+
+  test('renders a dynamic og.png once a snapshot exists', async ({ request }) => {
+    await request.get('/api/odds');
+    const response = await request.get('/og.png');
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toBe('image/png');
+    const body = await response.body();
+    expect(body.length).toBeGreaterThan(10_000);
+    // A real render differs from the committed static fallback.
+    const staticCard = readFileSync('public/og.png');
+    expect(body.equals(staticCard)).toBe(false);
   });
 });
 

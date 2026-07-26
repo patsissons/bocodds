@@ -28,5 +28,8 @@
     "typescript-eslint": "^8.65.0",
     "vitest": "^4.1.10",
     "wrangler": "^4.114.0"
+  },
+  "dependencies": {
+    "workers-og": "^0.0.27"
   }
 }
