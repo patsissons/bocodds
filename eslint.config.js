@@ -16,7 +16,7 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['public/app.js'],
+    files: ['public/*.js'],
     languageOptions: {
       globals: { ...globals.browser },
     },

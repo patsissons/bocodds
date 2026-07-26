@@ -157,6 +157,41 @@ test.describe('dynamic OG meta', () => {
   });
 });
 
+test.describe('embed page', () => {
+  test('renders the compact card for the next meeting', async ({ page }) => {
+    await page.goto('/embed');
+    await expect(page.locator('.embed-heading')).toContainText('September 2');
+    await expect(page.locator('.embed-heading')).toContainText(/in \d+ days?|today/);
+    await expect(page.locator('.bar')).toHaveCount(3);
+    await expect(page.locator('.embed-footer a')).toHaveText('bocodds.com');
+  });
+
+  test('selects a meeting with ?meeting=', async ({ page }) => {
+    await page.goto('/embed?meeting=2026-12-09');
+    await expect(page.locator('.embed-heading')).toContainText('December 9');
+    // The fixtures have no December Polymarket market.
+    await expect(page.locator('.bar')).toHaveCount(2);
+  });
+
+  test('fits a narrow iframe without horizontal scroll', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 220 });
+    await page.goto('/embed');
+    await expect(page.locator('.bar').first()).toBeVisible();
+    const overflow = await page.evaluate(() => {
+      const el = document.scrollingElement!;
+      return el.scrollWidth - el.clientWidth;
+    });
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test('unreachable API keeps the outbound link', async ({ page }) => {
+    await page.route('**/api/odds', (route) => route.abort());
+    await page.goto('/embed');
+    await expect(page.locator('.embed-error')).toContainText('unavailable');
+    await expect(page.locator('.embed-footer a')).toBeVisible();
+  });
+});
+
 test.describe('error state', () => {
   test('unreachable API shows a friendly error and keeps the static links', async ({ page }) => {
     await page.route('**/api/odds', (route) => route.abort());

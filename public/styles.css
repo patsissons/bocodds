@@ -307,6 +307,35 @@ h3 {
   margin: 4px 0 0;
 }
 
+/* ---- Embed (iframe card) ---- */
+
+body.embed {
+  max-width: none;
+  padding: 12px 16px 10px;
+}
+
+.embed-heading {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.embed .strip {
+  margin: 10px 0 6px;
+}
+
+.embed-footer {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 8px 0 0;
+}
+
+.embed-error {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 8px 0 0;
+}
+
 /* ---- Schedule, links, about ---- */
 
 .schedule,
