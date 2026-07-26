@@ -72,12 +72,50 @@ request works from a residential IP. Mitigations, in order of preference:
    env vars in the Pages dashboard: `KALSHI_API_KEY_ID` (the UUID) and `KALSHI_PRIVATE_KEY`
    (the downloaded PEM, pasted verbatim; PKCS#8 or PKCS#1, `\n`-escaped also accepted).
    Requests are then signed (RSA-PSS) and rate limiting applies per key instead of per IP.
-2. **Relay on a different egress pool**: deploy `proxy/kalshi-proxy.ts` on Deno Deploy's free
-   tier (dash.deno.com → New Playground → paste the file) and set `KALSHI_BASE_URL` to the
-   resulting `https://<name>.deno.dev` URL in the Pages dashboard. No code changes needed.
+2. **Relay on a different egress pool**: route Kalshi requests through a tiny proxy hosted
+   somewhere whose IPs aren't shared with half the internet. This is what production uses —
+   see "The Kalshi relay (Deno Deploy)" below.
 3. **Do nothing**: the function retries 429s with backoff on every refresh, and any success is
    carried forward as `stale` between wins, so intermittent breakthroughs keep the card
    populated with an "as of" tag.
+
+### The Kalshi relay (Deno Deploy)
+
+Production routes all Kalshi traffic through a relay running as a Deno Deploy playground:
+
+- **Playground (edit/deploy here):** https://console.deno.com/patsissons/bocodds
+- **Deployment URL:** https://bocodds.patsissons.deno.net — wired up via `KALSHI_BASE_URL`
+  in `wrangler.toml` `[vars]`, so the Pages Function calls the relay instead of
+  `external-api.kalshi.com` directly.
+- **Source of truth:** `proxy/kalshi-proxy.ts` in this repo.
+
+The relay is deliberately minimal: it accepts only `GET /trade-api/v2/markets` (the one
+endpoint this app uses), forwards the query string verbatim to `external-api.kalshi.com`,
+returns the upstream body with a 15 s cache header, and 404s everything else. It never
+touches authenticated routes and holds no secrets, so a playground is all it needs.
+
+**Updating or redeploying the relay** — the playground is _not_ connected to this repo;
+edits to `proxy/kalshi-proxy.ts` do **not** deploy themselves:
+
+1. Make the change in `proxy/kalshi-proxy.ts` and commit it here (keep the repo the source
+   of truth).
+2. Open the playground and paste the full updated file over its contents. Saving a
+   playground deploys it — the URL stays the same, so no Cloudflare change is needed.
+3. Verify with a curl against the relay; a healthy response is Kalshi market JSON:
+
+   ```sh
+   curl 'https://bocodds.patsissons.deno.net/trade-api/v2/markets?series_ticker=KXCBDECISIONCANADA&status=open&limit=1'
+   ```
+
+4. Optionally force a fresh snapshot (see "Forcing an early refresh") and confirm the
+   Kalshi card on the site shows numbers again.
+
+To point production at a different relay (or bypass it), change `KALSHI_BASE_URL` in
+`wrangler.toml` and push, or override the var in the Pages dashboard. Removing the var
+entirely falls back to contacting Kalshi directly — which is exactly the setup that gets
+429'd from Cloudflare, so keep the relay unless something better replaces it. Local dev
+and the test suites never use the relay (tests point `KALSHI_BASE_URL` at a fixture
+server).
 
 ### Forcing an early refresh
 

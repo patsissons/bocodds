@@ -1,9 +1,9 @@
 // Minimal Kalshi relay for when the main deployment's egress IPs are
 // rate-limited (Cloudflare Workers share anonymous per-IP quota across all
 // tenants; see README "Kalshi rate limits"). Deploy this on a platform with a
-// different egress pool — e.g. Deno Deploy's free tier (dash.deno.com → New
-// Playground → paste this file) — then set KALSHI_BASE_URL to the deployment
-// URL in the Pages dashboard.
+// different egress pool — production uses a Deno Deploy playground; see README
+// "The Kalshi relay (Deno Deploy)" for the deployment and update procedure.
+// This file is the source of truth: paste it into the playground to redeploy.
 //
 // It only relays the one endpoint this app uses, forwards the query string
 // verbatim, and never touches authenticated routes.
