@@ -88,7 +88,9 @@ deterministically offline. First run: `npx playwright install chromium`.
 ## Deployment (Cloudflare Pages)
 
 1. Create the Pages project (GitHub integration, or `npx wrangler pages deploy`).
-   Build output directory: `public`. No build command needed.
+   Build output directory: `public`. **Build command: `npm ci`** — there is no build step,
+   but without it Pages skips dependency installation and the Functions bundler fails with
+   `Could not resolve "workers-og"` (the social-card renderer is a runtime npm dependency).
 2. The `SNAPSHOTS` KV binding is declared in `wrangler.toml` (namespace
    `bocodds-snapshots`); Pages applies it automatically on deploy. If you fork this, create
    your own KV namespace and put its ID there (or bind it in the dashboard instead).
