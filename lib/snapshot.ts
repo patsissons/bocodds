@@ -13,6 +13,8 @@ export interface Outcome {
   probability: number;
   volume?: number;
   liquidity?: number;
+  /** bocodds only: basis-point change vs the current policy rate. */
+  change_bps?: number;
 }
 
 export type Rollup = Record<Direction, number>;

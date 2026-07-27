@@ -103,6 +103,21 @@ describe('buildBocOddsBlocks', () => {
     expect(blocks.get('2026-09-02')!.rollup).toBeDefined();
   });
 
+  it('annotates each outcome with its bps change vs the reference rate', () => {
+    const blocks = buildBocOddsBlocks(page, 2.25);
+    const outcomes = blocks.get('2026-09-02')!.outcomes!;
+    const byLabel = new Map(outcomes.map((o) => [o.label, o.change_bps]));
+    expect(byLabel.get('2.50%')).toBe(25);
+    expect(byLabel.get('2.25%')).toBe(0);
+    expect(byLabel.get('2.00%')).toBe(-25);
+  });
+
+  it('omits change_bps when no reference rate is available', () => {
+    const blocks = buildBocOddsBlocks({ ...page, currentRate: null }, null);
+    const outcomes = blocks.get('2026-09-02')!.outcomes!;
+    expect(outcomes.every((o) => o.change_bps === undefined)).toBe(true);
+  });
+
   it('emits a degraded block with a note and no numbers for invalid tables', () => {
     const degradedPage = {
       lastUpdatedText: 'July 25, 2026 8:56 am',

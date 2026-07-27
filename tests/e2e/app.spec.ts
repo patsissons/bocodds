@@ -67,6 +67,9 @@ test.describe('rendered page (all sources ok)', () => {
     await expect(september).toContainText('No Change');
     await expect(september).toContainText('liq');
     await expect(september).toContainText('2.50%');
+    // bocodds rate levels carry their bps change vs the current 2.25% rate.
+    await expect(september).toContainText('+25 bps');
+    await expect(september).toContainText('no change');
     await expect(september).toContainText('Last updated July 25, 2026');
     await expect(september).toContainText('Data: BankofCanadaOdds.com');
   });

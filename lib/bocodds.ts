@@ -114,10 +114,16 @@ export function parseBocOddsHtml(html: string): BocOddsPage {
   };
 }
 
+/** Numeric value of a target-rate label ("2.50%" -> 2.5). */
+function parseTargetRate(label: string): number | null {
+  const value = Number(label.replace(/[%\s]/g, ''));
+  return Number.isFinite(value) ? value : null;
+}
+
 /** Classify a target-rate level ("2.50%") against the current policy rate. */
 export function classifyTargetRate(label: string, currentRate: number): Direction | null {
-  const value = Number(label.replace(/[%\s]/g, ''));
-  if (!Number.isFinite(value)) return null;
+  const value = parseTargetRate(label);
+  if (value === null) return null;
   const epsilon = 0.001;
   if (value < currentRate - epsilon) return 'cut';
   if (value > currentRate + epsilon) return 'hike';
@@ -145,10 +151,18 @@ export function buildBocOddsBlocks(
       });
       continue;
     }
+    let outcomes = meeting.outcomes;
+    if (referenceRate !== null) {
+      outcomes = outcomes.map((outcome) => {
+        const value = parseTargetRate(outcome.label);
+        if (value === null) return outcome;
+        return { ...outcome, change_bps: Math.round((value - referenceRate) * 100) };
+      });
+    }
     const block: SourceBlock = {
       status: 'ok',
       last_updated_text: page.lastUpdatedText ?? undefined,
-      outcomes: meeting.outcomes,
+      outcomes,
       url: BOCODDS_URL,
     };
     if (referenceRate !== null) {

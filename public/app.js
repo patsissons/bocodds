@@ -63,6 +63,12 @@ function outcomeContext(source, outcome) {
       parts.push(`$${Math.round(outcome.liquidity).toLocaleString()} liq`);
   } else if (source === 'kalshi' && outcome.volume !== undefined) {
     parts.push(`${Math.round(outcome.volume).toLocaleString()} vol`);
+  } else if (source === 'bocodds' && outcome.change_bps !== undefined) {
+    parts.push(
+      outcome.change_bps === 0
+        ? 'no change'
+        : `${outcome.change_bps > 0 ? '+' : '−'}${Math.abs(outcome.change_bps)} bps`,
+    );
   }
   return parts.join(' · ');
 }
