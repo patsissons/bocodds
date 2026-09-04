@@ -1,7 +1,7 @@
 // ============================================================================
 // HARDCODED MEETING SCHEDULE — UPDATE ANNUALLY.
 //
-// The Bank of Canada publishes next year's schedule each August at
+// The Bank of Canada publishes next year's schedule each summer at
 // bankofcanada.ca (press release "schedule for policy interest rate
 // announcements"). When the new schedule is announced, add the new year's
 // dates here. All announcements are at 09:45 ET.
@@ -25,6 +25,14 @@ export const MEETINGS: ScheduledMeeting[] = [
   '2026-09-02',
   '2026-10-28',
   '2026-12-09',
+  '2027-01-27',
+  '2027-03-03',
+  '2027-04-28',
+  '2027-06-02',
+  '2027-07-21',
+  '2027-09-08',
+  '2027-10-27',
+  '2027-12-08',
 ].map((date) => ({ date, time_et: TIME_ET }));
 
 /** Meetings on or after `todayIso` (an ISO date like "2026-07-25"). */

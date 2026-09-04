@@ -93,8 +93,17 @@ describe('GET /api/odds', () => {
     });
     expect(body.last_decision).toBe('2026-07-15');
     expect(body.next_meeting).toBe('2026-09-02');
+    // Full sections are capped at the nearest 3 meetings even though more remain.
     expect(body.meetings.map((m) => m.date)).toEqual(['2026-09-02', '2026-10-28', '2026-12-09']);
-    expect(body.schedule).toHaveLength(3);
+    // The schedule carries the longer calendar, capped at 10, starting with the
+    // sectioned dates and crossing the year boundary.
+    expect(body.schedule).toHaveLength(10);
+    expect(body.schedule.slice(0, 3).map((m) => m.date)).toEqual([
+      '2026-09-02',
+      '2026-10-28',
+      '2026-12-09',
+    ]);
+    expect(body.schedule.map((m) => m.date)).toContain('2027-01-27');
 
     const september = body.meetings[0]!;
     expect(september.sources.kalshi!.status).toBe('ok');

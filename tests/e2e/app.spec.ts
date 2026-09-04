@@ -117,7 +117,16 @@ test.describe('rendered page (all sources ok)', () => {
   });
 
   test('shows the schedule and the disclaimer', async ({ page }) => {
+    // Ten upcoming dates, crossing into 2027 even though only three meetings
+    // get full sections above.
+    const items = page.locator('.schedule li');
+    await expect(items).toHaveCount(10);
     await expect(page.locator('.schedule')).toContainText('December 9, 2026');
+    await expect(page.locator('.schedule')).toContainText('January 27, 2027');
+    // Dates with a rendered section link to their in-page anchor; the rest
+    // link out to the Bank of Canada.
+    await expect(items.nth(0).locator('a')).toHaveAttribute('href', '#2026-09-02');
+    await expect(items.nth(3).locator('a')).toHaveAttribute('href', /bankofcanada\.ca/);
     await expect(page.locator('.about')).toContainText('not financial advice');
     await expect(page.locator('.about')).toContainText('not affiliated with the Bank of Canada');
   });

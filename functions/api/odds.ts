@@ -46,6 +46,12 @@ interface Env {
 const SNAPSHOT_KEY = 'snapshot:latest';
 const TTL_MS = 15 * 60 * 1000;
 
+// Full odds sections cost Polymarket lookups and far-future meetings have no
+// market data yet, so only the nearest few get one; the schedule list carries
+// the longer calendar.
+const MAX_MEETING_SECTIONS = 3;
+const MAX_SCHEDULE_DATES = 10;
+
 const POLYMARKET_PREDICTIONS_URL = 'https://polymarket.com/predictions/bank-of-canada';
 
 const SOURCE_URLS: Record<SourceName, string> = {
@@ -125,6 +131,7 @@ async function buildSnapshot(env: Env, previous: Snapshot | null, now: Date): Pr
   const generatedAt = now.toISOString();
   const today = generatedAt.slice(0, 10);
   const meetings = remainingMeetings(today);
+  const sectionMeetings = meetings.slice(0, MAX_MEETING_SECTIONS);
   const lastDecision = lastMeeting(today)?.date ?? null;
   const enableBocOdds = (env.ENABLE_BOCODDS ?? 'false').toLowerCase() === 'true';
   const contactEmail = env.CONTACT_EMAIL || 'unset@example.invalid';
@@ -137,7 +144,7 @@ async function buildSnapshot(env: Env, previous: Snapshot | null, now: Date): Pr
   const [rateResult, kalshiResult, polymarketResult, bocOddsPageResult] = await Promise.allSettled([
     fetchCurrentRate(env.BOC_VALET_BASE_URL),
     fetchKalshi(env.KALSHI_BASE_URL, kalshiAuth),
-    fetchPolymarket(meetings, env.POLYMARKET_BASE_URL),
+    fetchPolymarket(sectionMeetings, env.POLYMARKET_BASE_URL),
     enableBocOdds
       ? fetchBocOddsPage(contactEmail, env.BOCODDS_BASE_URL)
       : Promise.reject(new Error('disabled')),
@@ -187,7 +194,7 @@ async function buildSnapshot(env: Env, previous: Snapshot | null, now: Date): Pr
         : { kind: 'failed', reason: String(bocOddsPageResult.reason) },
   };
 
-  const meetingEntries: Meeting[] = meetings.map((meeting) => {
+  const meetingEntries: Meeting[] = sectionMeetings.map((meeting) => {
     const sources: Meeting['sources'] = {};
     for (const source of ['kalshi', 'polymarket', 'bocodds'] as SourceName[]) {
       sources[source] = blockFor(
@@ -212,7 +219,7 @@ async function buildSnapshot(env: Env, previous: Snapshot | null, now: Date): Pr
     last_decision: lastDecision,
     next_meeting: meetings[0]?.date ?? null,
     meetings: meetingEntries,
-    schedule: meetings,
+    schedule: meetings.slice(0, MAX_SCHEDULE_DATES),
   };
 }
 

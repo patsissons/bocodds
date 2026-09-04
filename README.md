@@ -192,9 +192,12 @@ visitors.
 
 ## Updating the yearly schedule
 
-The Bank of Canada publishes next year's decision dates each August (press release: "schedule
+The Bank of Canada publishes next year's decision dates each summer (press release: "schedule
 for policy interest rate announcements"). Add them to `lib/schedule.ts` — that hardcoded list
-is the only place the schedule lives.
+is the only place the schedule lives — and add the new press release to the source links in
+`public/index.html`. Only the next `MAX_MEETING_SECTIONS` meetings (see
+`functions/api/odds.ts`) render full odds sections; the rest appear in the "Remaining decision
+dates" list, capped at `MAX_SCHEDULE_DATES`.
 
 ## Disclaimer
 

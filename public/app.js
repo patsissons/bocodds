@@ -185,7 +185,7 @@ function meetingSection(meeting, index, animate) {
   return section;
 }
 
-function scheduleSection(schedule) {
+function scheduleSection(schedule, sectionedDates) {
   const list = el('ul');
   for (const item of schedule) {
     list.append(
@@ -193,7 +193,7 @@ function scheduleSection(schedule) {
         'li',
         {},
         el('a', {
-          href: BOC_KEY_RATE_URL,
+          href: sectionedDates.has(item.date) ? `#${item.date}` : BOC_KEY_RATE_URL,
           class: 'num',
           text: `${fullDate(item.date)}, ${item.time_et} ET`,
         }),
@@ -264,7 +264,9 @@ function render(data) {
   data.meetings.forEach((meeting, index) => {
     content.append(meetingSection(meeting, index, animate));
   });
-  if (data.schedule.length > 0) content.append(scheduleSection(data.schedule));
+  if (data.schedule.length > 0) {
+    content.append(scheduleSection(data.schedule, new Set(data.meetings.map((m) => m.date))));
+  }
   content.append(shareSection(data));
   // The sections render after load, so the browser's native scroll-to-hash
   // found nothing to target; redo it now that the anchor exists.

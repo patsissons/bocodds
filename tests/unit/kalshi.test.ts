@@ -71,6 +71,8 @@ describe('meetingDateForEventTicker', () => {
   it('maps ticker suffixes to scheduled meeting dates', () => {
     expect(meetingDateForEventTicker('KXCBDECISIONCANADA-26SEP')).toBe('2026-09-02');
     expect(meetingDateForEventTicker('KXCBDECISIONCANADA-26DEC')).toBe('2026-12-09');
+    // Next year's tickers go live before the year turns — they must not be dropped.
+    expect(meetingDateForEventTicker('KXCBDECISIONCANADA-27JAN')).toBe('2027-01-27');
   });
 
   it('returns undefined for unscheduled or malformed tickers', () => {
