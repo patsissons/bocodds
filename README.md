@@ -110,48 +110,63 @@ request works from a residential IP. Mitigations, in order of preference:
    Requests are then signed (RSA-PSS) and rate limiting applies per key instead of per IP.
 2. **Relay on a different egress pool**: route Kalshi requests through a tiny proxy hosted
    somewhere whose IPs aren't shared with half the internet. This is what production uses —
-   see "The Kalshi relay (Deno Deploy)" below.
+   see "The upstream relay (Deno Deploy)" below.
 3. **Do nothing**: the function retries 429s with backoff on every refresh, and any success is
    carried forward as `stale` between wins, so intermittent breakthroughs keep the card
    populated with an "as of" tag.
 
-### The Kalshi relay (Deno Deploy)
+### BoC Valet and the July 2026 outage
 
-Production routes all Kalshi traffic through a relay running as a Deno Deploy playground:
+The current policy rate comes from the Bank of Canada's Valet API. Around 2026-07-25 the
+BoC reworded the V39079 series metadata — the name "Target for the overnight rate" moved
+from `description` into `label` — which tripped the series-identity guard in `lib/boc.ts`
+on every refresh and silently pinned the header's rate to a July observation (the guard
+now accepts the phrase in either field). Valet traffic additionally routes through the
+relay via `BOC_VALET_BASE_URL` in `wrangler.toml` `[vars]` as insurance: Valet has no
+API-key escape hatch, and Cloudflare Workers' shared egress IPs are exactly the traffic
+upstreams like Kalshi already throttle.
+
+### The upstream relay (Deno Deploy)
+
+Production routes Kalshi and BoC Valet traffic through a relay running as a Deno Deploy
+playground:
 
 - **Playground (edit/deploy here):** https://console.deno.com/patsissons/bocodds
 - **Deployment URL:** https://bocodds.patsissons.deno.net — wired up via `KALSHI_BASE_URL`
-  in `wrangler.toml` `[vars]`, so the Pages Function calls the relay instead of
-  `external-api.kalshi.com` directly.
-- **Source of truth:** `proxy/kalshi-proxy.ts` in this repo.
+  and `BOC_VALET_BASE_URL` in `wrangler.toml` `[vars]`, so the Pages Function calls the
+  relay instead of `external-api.kalshi.com` / `www.bankofcanada.ca` directly.
+- **Source of truth:** `proxy/relay.ts` in this repo.
 
-The relay is deliberately minimal: it accepts only `GET /trade-api/v2/markets` (the one
-endpoint this app uses), forwards the query string verbatim to `external-api.kalshi.com`,
-returns the upstream body with a 15 s cache header, and 404s everything else. It never
-touches authenticated routes and holds no secrets, so a playground is all it needs.
+The relay is deliberately minimal: it accepts only `GET /trade-api/v2/markets` and
+`GET /valet/observations/V39079/json` (the two endpoints this app uses), forwards the query
+string verbatim to the matching upstream, returns the upstream body with a 15 s cache
+header, and 404s everything else. It never touches authenticated routes and holds no
+secrets, so a playground is all it needs.
 
 **Updating or redeploying the relay** — the playground is _not_ connected to this repo;
-edits to `proxy/kalshi-proxy.ts` do **not** deploy themselves:
+edits to `proxy/relay.ts` do **not** deploy themselves:
 
-1. Make the change in `proxy/kalshi-proxy.ts` and commit it here (keep the repo the source
+1. Make the change in `proxy/relay.ts` and commit it here (keep the repo the source
    of truth).
 2. Open the playground and paste the full updated file over its contents. Saving a
    playground deploys it — the URL stays the same, so no Cloudflare change is needed.
-3. Verify with a curl against the relay; a healthy response is Kalshi market JSON:
+3. Verify with curls against the relay; healthy responses are Kalshi market JSON and
+   Valet JSON with `seriesDetail.V39079`:
 
    ```sh
    curl 'https://bocodds.patsissons.deno.net/trade-api/v2/markets?series_ticker=KXCBDECISIONCANADA&status=open&limit=1'
+   curl 'https://bocodds.patsissons.deno.net/valet/observations/V39079/json?recent=1'
    ```
 
 4. Optionally force a fresh snapshot (see "Forcing an early refresh") and confirm the
-   Kalshi card on the site shows numbers again.
+   Kalshi card and the header's current policy rate look right on the site.
 
-To point production at a different relay (or bypass it), change `KALSHI_BASE_URL` in
-`wrangler.toml` and push, or override the var in the Pages dashboard. Removing the var
-entirely falls back to contacting Kalshi directly — which is exactly the setup that gets
-429'd from Cloudflare, so keep the relay unless something better replaces it. Local dev
-and the test suites never use the relay (tests point `KALSHI_BASE_URL` at a fixture
-server).
+To point production at a different relay (or bypass it), change `KALSHI_BASE_URL` /
+`BOC_VALET_BASE_URL` in `wrangler.toml` and push, or override the vars in the Pages
+dashboard. Removing a var entirely falls back to contacting the upstream directly — which
+is exactly the setup that gets blocked from Cloudflare, so keep the relay unless something
+better replaces it. Local dev and the test suites never use the relay (tests point the
+base URLs at a fixture server).
 
 ### Forcing an early refresh
 

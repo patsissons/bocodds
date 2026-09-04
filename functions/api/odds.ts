@@ -31,7 +31,9 @@ interface Env {
    * which reliably 429s in production. */
   KALSHI_API_KEY_ID?: string;
   KALSHI_PRIVATE_KEY?: string;
-  // Test-only base URL overrides; production uses the real hosts.
+  /* KALSHI_BASE_URL and BOC_VALET_BASE_URL point at the Deno relay in
+   * production (see wrangler.toml) to sidestep shared-egress throttling.
+   * The other two are test-only overrides. */
   KALSHI_BASE_URL?: string;
   POLYMARKET_BASE_URL?: string;
   BOCODDS_BASE_URL?: string;

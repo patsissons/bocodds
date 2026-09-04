@@ -16,6 +16,7 @@
   "include": [
     "lib/**/*.ts",
     "functions/**/*.ts",
+    "proxy/**/*.ts",
     "tests/**/*.ts",
     "vitest.config.ts",
     "playwright.config.ts"
