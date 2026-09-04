@@ -1,0 +1,19 @@
+# Pages' default for static assets is max-age=14400, which leaves returning
+# browsers on 4-hour-stale JS/CSS after every deploy (while the function-served
+# HTML updates within 60s). no-cache still lets browsers store the files but
+# forces an ETag revalidation per load, so deploys reach everyone immediately
+# at the cost of a cheap 304.
+/app.js
+  Cache-Control: public, no-cache
+/shared.js
+  Cache-Control: public, no-cache
+/embed.js
+  Cache-Control: public, no-cache
+/styles.css
+  Cache-Control: public, no-cache
+/embed.html
+  Cache-Control: public, no-cache
+
+# Fonts only ever change by getting new filenames.
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -123,6 +123,17 @@ test.describe('rendered page (all sources ok)', () => {
   });
 });
 
+test.describe('asset caching', () => {
+  test('code assets ask browsers to revalidate every load', async ({ request }) => {
+    // Without _headers, Pages defaults static assets to max-age=14400 and
+    // returning browsers run 4-hour-stale JS after a deploy.
+    for (const path of ['/app.js', '/shared.js', '/styles.css', '/embed.js']) {
+      const response = await request.get(path);
+      expect(response.headers()['cache-control'], path).toContain('no-cache');
+    }
+  });
+});
+
 test.describe('section anchors', () => {
   test('loading a #<date> URL auto-scrolls to that meeting', async ({ page }) => {
     await page.goto('/#2026-12-09');
