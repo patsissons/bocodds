@@ -17,6 +17,15 @@ type OddsBody = {
   meetings: Array<{ sources: Record<string, Record<string, unknown>> }>;
 };
 
+// The fixtures are a frozen 2026-07-25 world. The function's clock is pinned
+// via the TEST_NOW binding (playwright.config.ts); browser clocks are pinned
+// here so client-side date math ("in N days") agrees with the fixtures.
+const FIXED_NOW = new Date('2026-07-25T14:30:00Z');
+
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(FIXED_NOW);
+});
+
 async function mutateOdds(page: Page, mutate: (body: OddsBody) => void): Promise<void> {
   await page.route('**/api/odds', async (route: Route) => {
     const response = await route.fetch();

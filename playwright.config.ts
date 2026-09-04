@@ -19,6 +19,9 @@ const wranglerCommand = [
   `--binding POLYMARKET_BASE_URL=${fixtureBase}`,
   `--binding BOCODDS_BASE_URL=${fixtureBase}`,
   `--binding BOC_VALET_BASE_URL=${fixtureBase}`,
+  // The fixtures describe a frozen 2026-07-25 world; pin the function's clock
+  // to match (browser clocks are pinned per-test via page.clock).
+  '--binding TEST_NOW=2026-07-25T14:30:00Z',
 ].join(' ');
 
 export default defineConfig({

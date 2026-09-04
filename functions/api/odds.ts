@@ -36,6 +36,9 @@ interface Env {
   POLYMARKET_BASE_URL?: string;
   BOCODDS_BASE_URL?: string;
   BOC_VALET_BASE_URL?: string;
+  /* Test-only: pins the function's clock so the e2e suite's frozen fixtures
+   * stay valid as real time passes the meetings they describe. */
+  TEST_NOW?: string;
 }
 
 const SNAPSHOT_KEY = 'snapshot:latest';
@@ -233,7 +236,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 };
 
 const handleRequest = async (context: Parameters<PagesFunction<Env>>[0]): Promise<Response> => {
-  const now = new Date();
+  const now = context.env.TEST_NOW ? new Date(context.env.TEST_NOW) : new Date();
   // Operator escape hatch: ?refresh=<REFRESH_TOKEN> rebuilds the snapshot
   // immediately (e.g. after a fix, without waiting out the TTL). Token-gated
   // so visitors can't bypass the cache and hammer the upstreams.
