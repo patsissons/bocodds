@@ -157,11 +157,21 @@ h3 {
 .meeting {
   padding: 28px 0;
   border-bottom: 1px solid var(--rule);
+  scroll-margin-top: 12px;
 }
 
 .meeting h2 {
   font-size: 22px;
   margin: 0 0 4px;
+}
+
+/* Heading is a self-anchor (#<date>) for sharing a section's URL. */
+.meeting h2 a {
+  text-decoration: none;
+}
+
+.meeting h2 a:hover {
+  text-decoration: underline;
 }
 
 .meeting.secondary h2 {

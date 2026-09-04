@@ -8,6 +8,7 @@ import { expect, test, type Page, type Route } from '@playwright/test';
 // Evaluated in the browser; the node-side tsconfig has no DOM lib.
 declare const document: {
   scrollingElement: { scrollWidth: number; clientWidth: number } | null;
+  getElementById(id: string): { getBoundingClientRect(): { top: number } } | null;
 };
 declare const navigator: {
   clipboard: { readText(): Promise<string> };
@@ -108,10 +109,31 @@ test.describe('rendered page (all sources ok)', () => {
     await expect(copyEmbed).toHaveText('Copy embed code'); // label restores
   });
 
+  test('meeting headings are anchor links that update the URL', async ({ page }) => {
+    const heading = page.locator('[id="2026-12-09"] h2 a');
+    await expect(heading).toHaveAttribute('href', '#2026-12-09');
+    await heading.click();
+    expect(page.url()).toContain('#2026-12-09');
+  });
+
   test('shows the schedule and the disclaimer', async ({ page }) => {
     await expect(page.locator('.schedule')).toContainText('December 9, 2026');
     await expect(page.locator('.about')).toContainText('not financial advice');
     await expect(page.locator('.about')).toContainText('not affiliated with the Bank of Canada');
+  });
+});
+
+test.describe('section anchors', () => {
+  test('loading a #<date> URL auto-scrolls to that meeting', async ({ page }) => {
+    await page.goto('/#2026-12-09');
+    await expect(page.locator('.meeting').first()).toBeVisible();
+    // The section renders after load, so app.js redoes the hash scroll; the
+    // heading should end up at the viewport top (12px scroll-margin).
+    await expect
+      .poll(() =>
+        page.evaluate(() => document.getElementById('2026-12-09')!.getBoundingClientRect().top),
+      )
+      .toBeLessThan(30);
   });
 });
 

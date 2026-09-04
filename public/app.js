@@ -149,8 +149,11 @@ function sourceDetail(source, block) {
 }
 
 function meetingSection(meeting, index, animate) {
-  const section = el('section', { class: index === 0 ? 'meeting' : 'meeting secondary' });
-  const heading = el('h2', { text: fullDate(meeting.date) });
+  const section = el('section', {
+    id: meeting.date,
+    class: index === 0 ? 'meeting' : 'meeting secondary',
+  });
+  const heading = el('h2', {}, el('a', { href: `#${meeting.date}`, text: fullDate(meeting.date) }));
   const flag = divergenceFlag(meeting);
   if (flag) heading.append(flag);
   section.append(heading);
@@ -263,6 +266,10 @@ function render(data) {
   });
   if (data.schedule.length > 0) content.append(scheduleSection(data.schedule));
   content.append(shareSection(data));
+  // The sections render after load, so the browser's native scroll-to-hash
+  // found nothing to target; redo it now that the anchor exists.
+  const anchor = location.hash && document.getElementById(location.hash.slice(1));
+  if (anchor) anchor.scrollIntoView();
 }
 
 async function main() {
