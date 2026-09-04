@@ -12,16 +12,21 @@ export const BOC_KEY_RATE_URL =
   'https://www.bankofcanada.ca/core-functions/monetary-policy/key-interest-rate/';
 
 interface ValetResponse {
-  seriesDetail?: Record<string, { description?: string }>;
+  seriesDetail?: Record<string, { label?: string; description?: string }>;
   observations?: Array<Record<string, { v?: string } | string>>;
 }
 
 /** Extract and verify the current policy rate. Pure; exported for tests. */
 export function parseValetResponse(body: ValetResponse): { value: number; asOf: string } {
-  const description = body.seriesDetail?.['V39079']?.description ?? '';
-  if (!/overnight rate/i.test(description)) {
+  // The BoC moves the series name between these fields: originally the
+  // description read "Target for the overnight rate", then ~2026-07 that
+  // moved into label and the description became prose without the phrase
+  // (which silently broke this guard in production). Accept either field.
+  const detail = body.seriesDetail?.['V39079'];
+  const name = `${detail?.label ?? ''} | ${detail?.description ?? ''}`;
+  if (!/overnight rate/i.test(name)) {
     throw new Error(
-      `Valet series V39079 is not labelled as the overnight rate target (got "${description}")`,
+      `Valet series V39079 is not labelled as the overnight rate target (got "${name}")`,
     );
   }
   const observation = body.observations?.[0];
