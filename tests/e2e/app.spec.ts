@@ -14,6 +14,7 @@ declare const navigator: {
 };
 
 type OddsBody = {
+  current_rate: Record<string, unknown>;
   meetings: Array<{ sources: Record<string, Record<string, unknown>> }>;
 };
 
@@ -42,7 +43,9 @@ test.describe('rendered page (all sources ok)', () => {
   });
 
   test('shows header meta, three meetings, and the consensus strip', async ({ page }) => {
-    await expect(page.locator('#header-meta')).toContainText('Current policy rate: 2.25%');
+    await expect(page.locator('#header-meta')).toContainText(
+      'Current policy rate: 2.25% (since the July 15 decision).',
+    );
     await expect(page.locator('#header-meta')).toContainText('Next decision:');
 
     const meetings = page.locator('.meeting');
@@ -123,6 +126,19 @@ test.describe('degraded and disabled states', () => {
     const september = page.locator('.meeting').first();
     await expect(september.locator('.status-tag')).toContainText('as of');
     await expect(september.locator('.bar')).toHaveCount(3); // stale still draws its bar
+  });
+
+  test('suspect rate falls back to the observation date with a warning pill', async ({ page }) => {
+    await mutateOdds(page, (body) => {
+      body.current_rate['status'] = 'stale';
+      body.current_rate['suspect'] = true;
+    });
+    await page.goto('/');
+    // "since the <decision>" is exactly the claim a suspect rate can't make.
+    await expect(page.locator('#header-meta')).toContainText('(as of Thursday, July 23)');
+    const warning = page.locator('#header-meta .rate-warning');
+    await expect(warning).toBeVisible();
+    await expect(warning).toContainText('may not reflect the July 15 decision');
   });
 
   test('degraded source keeps its link but shows no numbers', async ({ page }) => {

@@ -8,6 +8,7 @@ import {
   fullDate,
   legend,
   longDate,
+  monthDay,
   pct,
   relativeDays,
   stripRow,
@@ -18,19 +19,36 @@ const BOC_KEY_RATE_URL =
   'https://www.bankofcanada.ca/core-functions/monetary-policy/key-interest-rate/';
 
 function renderHeaderMeta(data) {
-  const parts = [];
-  if (data.current_rate.value !== null) {
-    const asOf = data.current_rate.as_of ? ` (as of ${longDate(data.current_rate.as_of)})` : '';
-    parts.push(`Current policy rate: ${data.current_rate.value.toFixed(2)}%${asOf}.`);
+  const meta = document.getElementById('header-meta');
+  meta.replaceChildren();
+  const rate = data.current_rate;
+  if (rate.value !== null) {
+    if (rate.suspect) {
+      // A decision happened after the last successful fetch, so "since the
+      // <date> decision" is exactly the claim the data can't back.
+      const asOf = rate.as_of ? ` (as of ${longDate(rate.as_of)})` : '';
+      meta.append(`Current policy rate: ${rate.value.toFixed(2)}%${asOf}. `);
+      meta.append(
+        el('span', {
+          class: 'rate-warning',
+          text: `may not reflect the ${monthDay(data.last_decision)} decision`,
+        }),
+        ' ',
+      );
+    } else {
+      const since = data.last_decision
+        ? ` (since the ${monthDay(data.last_decision)} decision)`
+        : '';
+      meta.append(`Current policy rate: ${rate.value.toFixed(2)}%${since}. `);
+    }
   }
   if (data.next_meeting) {
-    parts.push(
-      `Next decision: ${longDate(data.next_meeting)}, 09:45 ET, ${relativeDays(data.next_meeting)}.`,
+    const timeEt = data.schedule.find((m) => m.date === data.next_meeting)?.time_et ?? '09:45';
+    meta.append(
+      `Next decision: ${longDate(data.next_meeting)}, ${timeEt} ET, ${relativeDays(data.next_meeting)}.`,
     );
   }
-  const meta = document.getElementById('header-meta');
-  meta.textContent = parts.join(' ');
-  meta.hidden = parts.length === 0;
+  meta.hidden = !meta.hasChildNodes();
 }
 
 function divergenceFlag(meeting) {

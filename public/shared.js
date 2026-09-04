@@ -40,6 +40,13 @@ export function longDate(iso) {
   });
 }
 
+export function monthDay(iso) {
+  return localDate(iso).toLocaleDateString('en-CA', {
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
 export function fullDate(iso) {
   return localDate(iso).toLocaleDateString('en-CA', {
     weekday: 'long',

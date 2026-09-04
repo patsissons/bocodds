@@ -10,6 +10,7 @@ function snapshot(meetings: Meeting[]): Snapshot {
   return {
     generated_at: '2026-07-25T20:22:36.016Z',
     current_rate: { value: 2.25, as_of: '2026-07-23', source: 'boc_valet', status: 'ok' },
+    last_decision: '2026-07-15',
     next_meeting: meetings[0]?.date ?? null,
     meetings,
     schedule: [],

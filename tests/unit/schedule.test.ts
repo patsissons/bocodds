@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MEETINGS, meetingForYearMonth, remainingMeetings } from '../../lib/schedule';
+import { MEETINGS, lastMeeting, meetingForYearMonth, remainingMeetings } from '../../lib/schedule';
 
 describe('schedule', () => {
   it('has the eight official 2026 dates at 09:45 ET', () => {
@@ -25,6 +25,14 @@ describe('schedule', () => {
     ]);
     expect(remainingMeetings('2026-09-02').map((m) => m.date)).toContain('2026-09-02');
     expect(remainingMeetings('2027-01-01')).toEqual([]);
+  });
+
+  it('returns the most recent meeting strictly before today', () => {
+    expect(lastMeeting('2026-01-01')).toBeUndefined();
+    // On a decision day the announcement hasn't landed yet — still the prior one.
+    expect(lastMeeting('2026-09-02')?.date).toBe('2026-07-15');
+    expect(lastMeeting('2026-09-03')?.date).toBe('2026-09-02');
+    expect(lastMeeting('2027-01-01')?.date).toBe('2026-12-09');
   });
 
   it('finds a meeting by year and month', () => {

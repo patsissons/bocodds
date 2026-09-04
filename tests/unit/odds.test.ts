@@ -91,6 +91,7 @@ describe('GET /api/odds', () => {
       source: 'boc_valet',
       status: 'ok',
     });
+    expect(body.last_decision).toBe('2026-07-15');
     expect(body.next_meeting).toBe('2026-09-02');
     expect(body.meetings.map((m) => m.date)).toEqual(['2026-09-02', '2026-10-28', '2026-12-09']);
     expect(body.schedule).toHaveLength(3);
@@ -159,6 +160,47 @@ describe('GET /api/odds', () => {
     expect(september.sources.kalshi!.fetched_at).toBe('2026-07-25T14:30:00.000Z');
     expect(september.sources.polymarket!.status).toBe('ok');
     expect(september.sources.bocodds!.status).toBe('ok');
+  });
+
+  it('trusts a carried-forward rate whose observation postdates the last decision', async () => {
+    stubFetch(healthyRoutes);
+    const kv = new MockKV();
+    await invoke(kv);
+
+    stubFetch([
+      { match: 'bankofcanada.ca/valet', body: '', fail: true },
+      ...healthyRoutes.filter((r) => !r.match.includes('valet')),
+    ]);
+    vi.setSystemTime(new Date(NOW.getTime() + 20 * 60 * 1000));
+    const { body } = await invoke(kv);
+
+    // as_of 2026-07-23 is after the July 15 decision: stale but not suspect.
+    expect(body.current_rate).toEqual({
+      value: 2.25,
+      as_of: '2026-07-23',
+      source: 'boc_valet',
+      status: 'stale',
+      suspect: false,
+    });
+  });
+
+  it('flags a carried-forward rate as suspect once a decision postdates it', async () => {
+    stubFetch(healthyRoutes);
+    const kv = new MockKV();
+    await invoke(kv);
+
+    stubFetch([
+      { match: 'bankofcanada.ca/valet', body: '', fail: true },
+      ...healthyRoutes.filter((r) => !r.match.includes('valet')),
+    ]);
+    vi.setSystemTime(new Date('2026-09-03T14:30:00Z')); // past the Sept 2 decision
+    const { body } = await invoke(kv);
+
+    expect(body.last_decision).toBe('2026-09-02');
+    expect(body.current_rate.status).toBe('stale');
+    expect(body.current_rate.suspect).toBe(true);
+    expect(body.current_rate.value).toBe(2.25);
+    expect(body.current_rate.as_of).toBe('2026-07-23');
   });
 
   it('marks a dead upstream unavailable on a cold start and still returns 200', async () => {

@@ -10,7 +10,7 @@ import { fetchCurrentRate } from '../../lib/boc';
 import { BOCODDS_URL, buildBocOddsBlocks, fetchBocOddsPage } from '../../lib/bocodds';
 import { KALSHI_MARKET_URL, fetchKalshi } from '../../lib/kalshi';
 import { fetchPolymarket } from '../../lib/polymarket';
-import { remainingMeetings } from '../../lib/schedule';
+import { lastMeeting, remainingMeetings } from '../../lib/schedule';
 import {
   computeDivergence,
   type CurrentRate,
@@ -125,6 +125,7 @@ async function buildSnapshot(env: Env, previous: Snapshot | null, now: Date): Pr
   const generatedAt = now.toISOString();
   const today = generatedAt.slice(0, 10);
   const meetings = remainingMeetings(today);
+  const lastDecision = lastMeeting(today)?.date ?? null;
   const enableBocOdds = (env.ENABLE_BOCODDS ?? 'false').toLowerCase() === 'true';
   const contactEmail = env.CONTACT_EMAIL || 'unset@example.invalid';
 
@@ -160,7 +161,12 @@ async function buildSnapshot(env: Env, previous: Snapshot | null, now: Date): Pr
   if (rateResult.status === 'fulfilled') {
     currentRate = rateResult.value;
   } else if (previous && previous.current_rate.value !== null) {
-    currentRate = { ...previous.current_rate, status: 'stale' };
+    // The policy rate only moves at scheduled decisions, so a carried-forward
+    // value is trustworthy exactly until a decision postdates its observation.
+    const carried = previous.current_rate;
+    const suspect =
+      lastDecision !== null && (carried.as_of === null || carried.as_of < lastDecision);
+    currentRate = { ...carried, status: 'stale', suspect };
   } else {
     currentRate = { value: null, as_of: null, source: 'boc_valet', status: 'unavailable' };
   }
@@ -203,6 +209,7 @@ async function buildSnapshot(env: Env, previous: Snapshot | null, now: Date): Pr
   return {
     generated_at: generatedAt,
     current_rate: currentRate,
+    last_decision: lastDecision,
     next_meeting: meetings[0]?.date ?? null,
     meetings: meetingEntries,
     schedule: meetings,

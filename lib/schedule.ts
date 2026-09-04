@@ -32,6 +32,16 @@ export function remainingMeetings(todayIso: string): ScheduledMeeting[] {
   return MEETINGS.filter((m) => m.date >= todayIso);
 }
 
+/**
+ * The most recent meeting strictly before `todayIso`, if any. On a decision
+ * day itself this is still the *previous* meeting: the announcement (09:45 ET)
+ * and Valet's next observation both land after any refresh that morning, so
+ * the prior decision is the one a fetched rate can reflect.
+ */
+export function lastMeeting(todayIso: string): ScheduledMeeting | undefined {
+  return MEETINGS.filter((m) => m.date < todayIso).at(-1);
+}
+
 /** Find the scheduled meeting in a given year and month (1-12), if any. */
 export function meetingForYearMonth(year: number, month: number): ScheduledMeeting | undefined {
   return MEETINGS.find((m) => {

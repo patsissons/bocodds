@@ -50,14 +50,20 @@ export interface Meeting {
 
 export interface CurrentRate {
   value: number | null;
+  /** Valet observation date — a freshness signal, not the displayed date. */
   as_of: string | null;
   source: 'boc_valet';
   status: 'ok' | 'stale' | 'unavailable';
+  /** Stale only: the last successful observation predates the most recent
+   * past decision, so an intervening decision may have changed the rate. */
+  suspect?: boolean;
 }
 
 export interface Snapshot {
   generated_at: string;
   current_rate: CurrentRate;
+  /** ISO date of the most recent past decision; null before the year's first. */
+  last_decision: string | null;
   next_meeting: string | null;
   meetings: Meeting[];
   schedule: ScheduledMeeting[];

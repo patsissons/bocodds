@@ -107,6 +107,17 @@ h3 {
   border-bottom: 1px solid var(--rule);
 }
 
+/* The displayed rate may predate a decision (upstream fetch has been failing
+ * across a meeting) — same "pay attention" pill as .divergence-flag. */
+.rate-warning {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--hike);
+  border: 1px solid currentcolor;
+  border-radius: 3px;
+  padding: 1px 7px;
+}
+
 /* ---- Skeleton / error ---- */
 
 .skeleton {
